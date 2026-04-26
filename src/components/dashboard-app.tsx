@@ -12,6 +12,7 @@ import {
   Flame,
   HeartPulse,
   LineChart,
+  Lock,
   Play,
   Settings,
   ShieldCheck,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Brand } from "./brand";
+import { plans } from "@/lib/plans";
 
 type Workout = {
   name: string;
@@ -141,12 +143,21 @@ function ScoreRing({ value }: { value: number }) {
 }
 
 export function DashboardApp() {
+  const [mode, setMode] = useState<"free" | "pro">("free");
   const [selected, setSelected] = useState(1);
   const [habits, setHabits] = useState(startingHabits);
   const [started, setStarted] = useState(false);
 
-  const selectedWorkout = workouts[selected];
-  const completedHabits = habits.filter((habit) => habit.done).length;
+  const isFree = mode === "free";
+  const workoutLimit = isFree
+    ? plans.free.weeklyWorkoutLimit
+    : plans.proMonthly.weeklyWorkoutLimit;
+  const habitLimit = isFree ? plans.free.habitLimit : plans.proMonthly.habitLimit;
+  const activeSelected = selected >= workoutLimit ? 0 : selected;
+  const selectedWorkout = workouts[activeSelected];
+  const activeHabits = habits.slice(0, habitLimit);
+  const completedHabits = activeHabits.filter((habit) => habit.done).length;
+
   const readiness = useMemo(() => {
     const habitBoost = completedHabits * 3;
     const loadPenalty = Math.round(selectedWorkout.intensity / 12);
@@ -183,16 +194,19 @@ export function DashboardApp() {
             ))}
           </nav>
           <div className="mt-8 hidden rounded-md border border-[#e6e1d8] bg-[#fbfaf6] p-4 lg:block">
-            <p className="text-sm font-semibold">PulsoFit Pro</p>
+            <p className="text-sm font-semibold">
+              {isFree ? "Free plan limits" : "PulsoFit Pro"}
+            </p>
             <p className="mt-2 text-xs leading-5 text-[#657168]">
-              Unlock adaptive weekly plans, recovery signals, and coaching
-              insights.
+              {isFree
+                ? "Free includes 3 workouts, 3 habits, and basic tracking. Upgrade when you want the full weekly plan."
+                : "Adaptive weekly plans, recovery signals, and coaching insights are active."}
             </p>
             <Link
               href="/pricing"
               className="focus-ring mt-4 inline-flex h-10 w-full items-center justify-center rounded-md bg-[#178a41] text-sm font-semibold text-white"
             >
-              14,99 EUR / month
+              Upgrade options
             </Link>
           </div>
         </aside>
@@ -211,12 +225,30 @@ export function DashboardApp() {
                 session around your current recovery.
               </p>
             </div>
-            <Link
-              href="/"
-              className="focus-ring inline-flex h-11 items-center justify-center rounded-md border border-[#d8d2c8] bg-white px-4 text-sm font-semibold"
-            >
-              Back home
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="grid grid-cols-2 rounded-md border border-[#d8d2c8] bg-white p-1">
+                {(["free", "pro"] as const).map((item) => (
+                  <button
+                    className={`focus-ring h-9 rounded-sm px-4 text-sm font-semibold transition ${
+                      mode === item
+                        ? "bg-[#178a41] text-white"
+                        : "text-[#4d584f] hover:bg-[#f6f1ea]"
+                    }`}
+                    key={item}
+                    onClick={() => setMode(item)}
+                    type="button"
+                  >
+                    {item === "free" ? "Free" : "Pro preview"}
+                  </button>
+                ))}
+              </div>
+              <Link
+                href="/"
+                className="focus-ring inline-flex h-11 items-center justify-center rounded-md border border-[#d8d2c8] bg-white px-4 text-sm font-semibold"
+              >
+                Back home
+              </Link>
+            </div>
           </div>
 
           <section className="mt-8 rounded-md border border-[#e6e1d8] bg-white p-4 shadow-[0_18px_70px_rgba(36,31,23,0.06)]">
@@ -230,40 +262,61 @@ export function DashboardApp() {
               </span>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
-              {workouts.map((workout, index) => (
-                <button
-                  className={`focus-ring rounded-md border p-4 text-left transition ${
-                    selected === index
-                      ? "border-[#178a41] bg-[#f2fbf4] shadow-[0_10px_24px_rgba(23,138,65,0.12)]"
-                      : "border-[#eee8df] bg-white hover:border-[#a9d3b6]"
-                  }`}
-                  key={workout.day}
-                  onClick={() => setSelected(index)}
-                  type="button"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">{workout.day}</p>
-                    <span
-                      className={`grid h-4 w-4 place-items-center rounded-sm ${
-                        workout.done
-                          ? "bg-[#178a41] text-white"
-                          : "border border-[#c9d0ca]"
-                      }`}
-                    >
-                      {workout.done ? <Check size={11} /> : null}
-                    </span>
-                  </div>
-                  <p className="mt-5 text-sm font-semibold">{workout.name}</p>
-                  <p className="mt-1 text-xs text-[#657168]">{workout.focus}</p>
-                  <div className="mt-5 h-1.5 rounded-sm bg-[#eee8df]">
-                    <span
-                      className="block h-full rounded-sm bg-[#f07053]"
-                      style={{ width: `${workout.intensity}%` }}
-                    />
-                  </div>
-                </button>
-              ))}
+              {workouts.map((workout, index) => {
+                const locked = index >= workoutLimit;
+
+                return (
+                  <button
+                    className={`focus-ring rounded-md border p-4 text-left transition ${
+                      locked
+                        ? "border-[#eee8df] bg-[#fbfaf6] opacity-75"
+                        : activeSelected === index
+                          ? "border-[#178a41] bg-[#f2fbf4] shadow-[0_10px_24px_rgba(23,138,65,0.12)]"
+                          : "border-[#eee8df] bg-white hover:border-[#a9d3b6]"
+                    }`}
+                    disabled={locked}
+                    key={workout.day}
+                    onClick={() => setSelected(index)}
+                    type="button"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold">{workout.day}</p>
+                      {locked ? (
+                        <Lock size={14} className="text-[#9aa39b]" />
+                      ) : (
+                        <span
+                          className={`grid h-4 w-4 place-items-center rounded-sm ${
+                            workout.done
+                              ? "bg-[#178a41] text-white"
+                              : "border border-[#c9d0ca]"
+                          }`}
+                        >
+                          {workout.done ? <Check size={11} /> : null}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-5 text-sm font-semibold">{workout.name}</p>
+                    <p className="mt-1 text-xs text-[#657168]">
+                      {locked ? "Pro unlock" : workout.focus}
+                    </p>
+                    <div className="mt-5 h-1.5 rounded-sm bg-[#eee8df]">
+                      <span
+                        className={`block h-full rounded-sm ${
+                          locked ? "bg-[#d8d2c8]" : "bg-[#f07053]"
+                        }`}
+                        style={{ width: `${locked ? 28 : workout.intensity}%` }}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+            {isFree ? (
+              <p className="mt-4 rounded-md bg-[#edf6ef] p-3 text-sm text-[#2e6f43]">
+                Free mode keeps the first 3 weekly workouts usable. Pro unlocks
+                the complete seven-day plan and adaptive adjustments.
+              </p>
+            ) : null}
           </section>
 
           <section className="mt-5 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
@@ -310,60 +363,82 @@ export function DashboardApp() {
               <div className="rounded-md border border-[#e6e1d8] bg-white p-5">
                 <h2 className="text-lg font-semibold">Habit Checklist</h2>
                 <p className="mt-1 text-sm text-[#657168]">
-                  {completedHabits} of {habits.length} complete
+                  {completedHabits} of {habitLimit} active habits complete
                 </p>
                 <div className="mt-5 space-y-3">
-                  {habits.map((habit, index) => (
-                    <button
-                      className="focus-ring flex w-full items-center justify-between rounded-md border border-[#eee8df] p-3 text-left"
-                      key={habit.label}
-                      onClick={() =>
-                        setHabits((items) =>
-                          items.map((item, itemIndex) =>
-                            itemIndex === index
-                              ? { ...item, done: !item.done }
-                              : item,
-                          ),
-                        )
-                      }
-                      type="button"
-                    >
-                      <span className="flex items-center gap-3">
-                        <span
-                          className={`grid h-5 w-5 place-items-center rounded-sm ${
-                            habit.done
-                              ? "bg-[#178a41] text-white"
-                              : "border border-[#cbd0c9]"
-                          }`}
-                        >
-                          {habit.done ? <Check size={13} /> : null}
-                        </span>
-                        <span>
-                          <span className="block text-sm font-semibold">
-                            {habit.label}
+                  {habits.map((habit, index) => {
+                    const locked = index >= habitLimit;
+
+                    return (
+                      <button
+                        className={`focus-ring flex w-full items-center justify-between rounded-md border border-[#eee8df] p-3 text-left ${
+                          locked ? "bg-[#fbfaf6] opacity-75" : "bg-white"
+                        }`}
+                        disabled={locked}
+                        key={habit.label}
+                        onClick={() =>
+                          setHabits((items) =>
+                            items.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? { ...item, done: !item.done }
+                                : item,
+                            ),
+                          )
+                        }
+                        type="button"
+                      >
+                        <span className="flex items-center gap-3">
+                          <span
+                            className={`grid h-5 w-5 place-items-center rounded-sm ${
+                              locked
+                                ? "border border-[#d8d2c8]"
+                                : habit.done
+                                  ? "bg-[#178a41] text-white"
+                                  : "border border-[#cbd0c9]"
+                            }`}
+                          >
+                            {locked ? (
+                              <Lock size={12} />
+                            ) : habit.done ? (
+                              <Check size={13} />
+                            ) : null}
                           </span>
-                          <span className="text-xs text-[#657168]">
-                            {habit.detail}
+                          <span>
+                            <span className="block text-sm font-semibold">
+                              {habit.label}
+                            </span>
+                            <span className="text-xs text-[#657168]">
+                              {locked ? "Pro habit" : habit.detail}
+                            </span>
                           </span>
                         </span>
-                      </span>
-                      <ChevronRight size={16} className="text-[#9aa39b]" />
-                    </button>
-                  ))}
+                        <ChevronRight size={16} className="text-[#9aa39b]" />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <div className="rounded-md border border-[#e6e1d8] bg-white p-5">
                 <h2 className="text-lg font-semibold">Recovery Score</h2>
                 <p className="mt-1 text-sm text-[#657168]">
-                  Updates when habits or workout load change.
+                  {isFree
+                    ? "Preview only in Free. Upgrade for adaptive recovery guidance."
+                    : "Updates when habits or workout load change."}
                 </p>
                 <div className="mt-6">
-                  <ScoreRing value={readiness} />
+                  {isFree ? (
+                    <div className="mx-auto grid h-32 w-32 place-items-center rounded-md border border-[#e6e1d8] bg-[#fbfaf6]">
+                      <Lock size={28} className="text-[#657168]" />
+                    </div>
+                  ) : (
+                    <ScoreRing value={readiness} />
+                  )}
                 </div>
                 <p className="mt-5 text-center text-sm text-[#657168]">
-                  You&apos;re ready to perform. Keep tempo controlled and full
-                  range of motion.
+                  {isFree
+                    ? "Basic habit tracking remains usable. Pro turns this into daily training guidance."
+                    : "You are ready to perform. Keep tempo controlled and full range of motion."}
                 </p>
               </div>
 
@@ -378,14 +453,17 @@ export function DashboardApp() {
                 <div className="flex h-44 items-end gap-3">
                   {workouts.map((workout, index) => (
                     <button
-                      className="focus-ring flex h-full flex-1 flex-col items-center justify-end gap-2"
+                      className="focus-ring flex h-full flex-1 flex-col items-center justify-end gap-2 disabled:opacity-50"
+                      disabled={index >= workoutLimit}
                       key={workout.day}
                       onClick={() => setSelected(index)}
                       type="button"
                     >
                       <span
                         className={`w-full rounded-sm transition ${
-                          selected === index ? "bg-[#178a41]" : "bg-[#f07053]/75"
+                          activeSelected === index
+                            ? "bg-[#178a41]"
+                            : "bg-[#f07053]/75"
                         }`}
                         style={{ height: `${Math.max(12, workout.intensity)}%` }}
                       />

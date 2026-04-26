@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   },
   description:
     "Adaptive workouts, habit tracking, and recovery signals in one focused fitness cockpit.",
-  metadataBase: new URL("https://pulsofit.vercel.app"),
+  metadataBase: new URL("https://pulsofit-red.vercel.app"),
   openGraph: {
     title: "PulsoFit",
     description:

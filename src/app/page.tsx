@@ -10,6 +10,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { CheckoutForm } from "@/components/checkout-form";
+import { LegalFooter } from "@/components/legal-footer";
 import { SiteHeader } from "@/components/site-header";
 
 const week = [
@@ -286,6 +287,9 @@ export default function Home() {
               14,99 EUR{" "}
               <span className="font-normal text-[#657168]">/ month</span>
             </p>
+            <p className="mt-3 text-sm text-[#657168]">
+              Free plan available. Annual Pro saves 15%.
+            </p>
           </div>
           <DashboardPreview />
         </section>
@@ -318,6 +322,7 @@ export default function Home() {
           </div>
         </section>
       </main>
+      <LegalFooter />
     </div>
   );
 }
