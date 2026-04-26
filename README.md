@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PulsoFit
+
+PulsoFit is a fitness SaaS MVP with a polished training dashboard, habit
+tracking, recovery signals, and a real Stripe subscription checkout for
+**PulsoFit Pro** at **14,99 EUR / month**.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stripe
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create the Stripe product and recurring price, then configure:
 
-## Learn More
+```bash
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PRICE_ID=price_1TQWpcCk2t7YRcTVDHlhW6LD
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+The checkout action uses Stripe Checkout Sessions in `subscription` mode and
+the Stripe API version `2026-02-25.clover`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Created Stripe resources:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Product: `prod_UPLWFE70vJs1QO`
+- Monthly price: `price_1TQWpcCk2t7YRcTVDHlhW6LD` (`1499` cents, `eur`)
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `npm run dev`: start local development
+- `npm run lint`: run ESLint
+- `npm run build`: build production app
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Concept
+
+Accepted layout concept:
+`C:\Users\Adri\.codex\generated_images\019dcad3-a6b9-72b3-8e8e-79623bd0687a\ig_08f82c40e91ddf750169ee4bb3c8ec819191a25b957b1d0b3b.png`
+
+Supporting project asset:
+`public/upper-body-focus.png`
