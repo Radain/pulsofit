@@ -49,13 +49,6 @@ const starterHabits = [
     completed: true,
     sort_order: 2,
   },
-  {
-    label: "Hydration",
-    target: "2L",
-    current_value: "2.4 / 2L",
-    completed: true,
-    sort_order: 3,
-  },
 ];
 
 export async function ensurePulsoFitAccount(user: AppUser) {
