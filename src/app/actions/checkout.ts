@@ -6,6 +6,8 @@ import { getCheckoutPriceId } from "@/lib/plans";
 
 export async function createCheckoutSession(formData: FormData) {
   const plan = formData.get("plan");
+  const insforgeUserId = formData.get("insforgeUserId");
+  const customerEmail = formData.get("customerEmail");
   const priceId = getCheckoutPriceId(plan, process.env);
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -13,6 +15,15 @@ export async function createCheckoutSession(formData: FormData) {
 
   if (!priceId) {
     redirect("/pricing?checkout=missing-price");
+  }
+
+  if (
+    typeof insforgeUserId !== "string" ||
+    typeof customerEmail !== "string" ||
+    !insforgeUserId ||
+    !customerEmail
+  ) {
+    redirect("/login");
   }
 
   let sessionUrl: string | null = null;
@@ -25,6 +36,18 @@ export async function createCheckoutSession(formData: FormData) {
       cancel_url: `${appUrl}/cancel`,
       allow_promotion_codes: true,
       billing_address_collection: "auto",
+      customer_email: customerEmail,
+      client_reference_id: insforgeUserId,
+      metadata: {
+        insforgeUserId,
+        plan: plan === "yearly" ? "yearly" : "monthly",
+      },
+      subscription_data: {
+        metadata: {
+          insforgeUserId,
+          plan: plan === "yearly" ? "yearly" : "monthly",
+        },
+      },
     });
 
     sessionUrl = session.url;

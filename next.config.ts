@@ -32,7 +32,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.stripe.com https://*.vercel-insights.com",
+      "connect-src 'self' https://*.stripe.com https://*.vercel-insights.com https://*.insforge.app",
       "form-action 'self' https://checkout.stripe.com",
       "upgrade-insecure-requests",
     ].join("; "),

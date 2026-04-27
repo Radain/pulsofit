@@ -16,6 +16,10 @@ public sale.
   payments.
 - Legal pages exist at `/legal/privacy`, `/legal/terms`, `/legal/refunds`,
   `/legal/cookies`, and `/legal/security`.
+- InsForge Auth protects the app workspace and requires email verification for
+  newly-created accounts.
+- InsForge Postgres stores user-owned profiles, workouts, habits, progress, and
+  subscription records with row-level security policies.
 - Refund policy is consumer-friendly: EU statutory rights plus a no-questions
   30-day first-subscription refund.
 - Security headers are configured in `next.config.ts`.
@@ -43,10 +47,10 @@ changes should be done with an owner token and reviewed before production use.
 - Replace placeholder legal identity with the real company/autonomo details,
   NIF/CIF, registered address, and support/privacy email.
 - Sign and retain Data Processing Agreements with Stripe, Vercel, and any other
-  processor.
+  processor, including InsForge.
 - If analytics, ads, heatmaps, or tracking cookies are added, implement a cookie
   consent banner before loading them.
 - Publish a self-service Stripe Customer Portal link for cancellations,
   invoices, and refunds where possible.
-- Add webhook handling for subscription lifecycle events before gating real user
-  access.
+- Add Stripe webhook handling for subscription lifecycle events before gating
+  paid Pro access from real subscription status.

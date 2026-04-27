@@ -1,31 +1,107 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { ArrowRight, LockKeyhole, ShieldCheck } from "lucide-react";
-
-type DemoSession = {
-  email: string;
-  plan: "free" | "pro";
-  startedAt: string;
-};
-
-function saveDemoSession(session: DemoSession) {
-  window.localStorage.setItem("pulsofit-session", JSON.stringify(session));
-}
+import { insforge } from "@/lib/insforge";
+import { ensurePulsoFitAccount } from "@/lib/pulsofit-account";
 
 export function LoginPanel() {
   const router = useRouter();
+  const [mode, setMode] = useState<"signin" | "signup" | "verify">("signin");
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function enterApp(plan: "free" | "pro") {
-    saveDemoSession({
-      email: email || "demo@pulsofit.app",
-      plan,
-      startedAt: new Date().toISOString(),
+  useEffect(() => {
+    insforge.auth.getCurrentUser().then(async ({ data }) => {
+      if (data.user) {
+        await ensurePulsoFitAccount(data.user);
+        router.replace("/app");
+      }
     });
+  }, [router]);
 
-    router.push(plan === "pro" ? "/app?plan=pro" : "/app");
+  async function completeLogin() {
+    const { data, error } = await insforge.auth.getCurrentUser();
+
+    if (error || !data.user) {
+      throw error ?? new Error("No active InsForge session");
+    }
+
+    await ensurePulsoFitAccount(data.user);
+    router.push("/app");
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setErrorMessage("");
+    setMessage("");
+    setIsSubmitting(true);
+
+    try {
+      if (mode === "signin") {
+        const { error } = await insforge.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          if (error.error === "EMAIL_NOT_VERIFIED") {
+            setMode("verify");
+            setMessage("Check your inbox and enter the verification code.");
+            return;
+          }
+
+          throw error;
+        }
+
+        await completeLogin();
+        return;
+      }
+
+      if (mode === "signup") {
+        const { data, error } = await insforge.auth.signUp({
+          email,
+          password,
+          name,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data?.requireEmailVerification) {
+          setMode("verify");
+          setMessage("Account created. Enter the 6-digit code from your email.");
+          return;
+        }
+
+        await completeLogin();
+        return;
+      }
+
+      const { error } = await insforge.auth.verifyEmail({
+        email,
+        otp: verificationCode,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      await completeLogin();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Authentication failed",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -61,44 +137,116 @@ export function LoginPanel() {
           </p>
           <h2 className="mt-3 text-3xl font-semibold">PulsoFit account</h2>
           <p className="mt-3 text-sm leading-6 text-[#657168]">
-            MVP login for testing the separated app shell. No password is stored
-            here.
+            Sign in with InsForge Auth. Your training workspace opens only after
+            a valid session is created.
           </p>
         </div>
 
-        <label className="mt-8 block text-sm font-semibold text-[#2e3731]">
-          Email
-          <input
-            className="focus-ring mt-2 h-12 w-full rounded-md border border-[#d8d2c8] bg-[#fbfaf6] px-4 text-sm font-medium"
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-            type="email"
-            value={email}
-          />
-        </label>
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button
-            className="focus-ring inline-flex h-12 items-center justify-center gap-2 rounded-md border border-[#d8d2c8] bg-white px-5 text-sm font-semibold transition hover:border-[#178a41]"
-            onClick={() => enterApp("free")}
-            type="button"
-          >
-            Continue Free
-            <ArrowRight size={16} />
-          </button>
-          <button
-            className="focus-ring inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#178a41] px-5 text-sm font-semibold text-white transition hover:bg-[#0f6f32]"
-            onClick={() => enterApp("pro")}
-            type="button"
-          >
-            Enter Pro demo
-            <ArrowRight size={16} />
-          </button>
+        <div className="mt-8 grid grid-cols-2 rounded-md border border-[#d8d2c8] bg-[#fbfaf6] p-1">
+          {(["signin", "signup"] as const).map((item) => (
+            <button
+              className={`focus-ring h-10 rounded-sm text-sm font-semibold transition ${
+                mode === item
+                  ? "bg-white text-[#101418] shadow-sm"
+                  : "text-[#657168] hover:text-[#178a41]"
+              }`}
+              key={item}
+              onClick={() => {
+                setMode(item);
+                setErrorMessage("");
+                setMessage("");
+              }}
+              type="button"
+            >
+              {item === "signin" ? "Sign in" : "Create account"}
+            </button>
+          ))}
         </div>
 
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+          {mode === "signup" ? (
+            <label className="block text-sm font-semibold text-[#2e3731]">
+              Name
+              <input
+                className="focus-ring mt-2 h-12 w-full rounded-md border border-[#d8d2c8] bg-[#fbfaf6] px-4 text-sm font-medium"
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Adri"
+                type="text"
+                value={name}
+              />
+            </label>
+          ) : null}
+
+          <label className="block text-sm font-semibold text-[#2e3731]">
+            Email
+            <input
+              className="focus-ring mt-2 h-12 w-full rounded-md border border-[#d8d2c8] bg-[#fbfaf6] px-4 text-sm font-medium"
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@example.com"
+              required
+              type="email"
+              value={email}
+            />
+          </label>
+
+          {mode === "verify" ? (
+            <label className="block text-sm font-semibold text-[#2e3731]">
+              Verification code
+              <input
+                className="focus-ring mt-2 h-12 w-full rounded-md border border-[#d8d2c8] bg-[#fbfaf6] px-4 text-sm font-medium"
+                inputMode="numeric"
+                onChange={(event) => setVerificationCode(event.target.value)}
+                placeholder="123456"
+                required
+                value={verificationCode}
+              />
+            </label>
+          ) : (
+            <label className="block text-sm font-semibold text-[#2e3731]">
+              Password
+              <input
+                className="focus-ring mt-2 h-12 w-full rounded-md border border-[#d8d2c8] bg-[#fbfaf6] px-4 text-sm font-medium"
+                minLength={6}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Minimum 6 characters"
+                required
+                type="password"
+                value={password}
+              />
+            </label>
+          )}
+
+          {message ? (
+            <p className="rounded-md bg-[#edf6ef] p-3 text-sm text-[#2e6f43]">
+              {message}
+            </p>
+          ) : null}
+
+          {errorMessage ? (
+            <p className="rounded-md bg-[#fff1ed] p-3 text-sm text-[#74311f]">
+              {errorMessage}
+            </p>
+          ) : null}
+
+          <button
+            className="focus-ring inline-flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#178a41] px-5 text-sm font-semibold text-white transition hover:bg-[#0f6f32] disabled:cursor-not-allowed disabled:opacity-70"
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting
+              ? "Working..."
+              : mode === "signin"
+                ? "Sign in to app"
+                : mode === "signup"
+                  ? "Create Free account"
+                  : "Verify and enter"}
+            <ArrowRight size={16} />
+          </button>
+        </form>
+
         <p className="mt-5 text-xs leading-5 text-[#657168]">
-          For live production, this screen should be connected to a real auth
-          provider before storing personal training data.
+          PulsoFit uses InsForge Auth. Email verification is required before a
+          new account can enter the app.
         </p>
       </div>
     </section>

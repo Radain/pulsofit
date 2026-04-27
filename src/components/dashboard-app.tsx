@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   ArrowRight,
@@ -17,8 +18,10 @@ import {
   ShieldCheck,
   Timer,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { insforge } from "@/lib/insforge";
 import { plans } from "@/lib/plans";
+import { ensurePulsoFitAccount } from "@/lib/pulsofit-account";
 
 type Workout = {
   name: string;
@@ -158,7 +161,10 @@ function AppWordmark() {
 }
 
 export function DashboardApp({ initialMode = "free" }: DashboardAppProps) {
+  const router = useRouter();
   const [mode, setMode] = useState<"free" | "pro">(initialMode);
+  const [userEmail, setUserEmail] = useState("");
+  const [isLoadingAccount, setIsLoadingAccount] = useState(true);
   const [selected, setSelected] = useState(1);
   const [habits, setHabits] = useState(startingHabits);
   const [started, setStarted] = useState(false);
@@ -178,6 +184,59 @@ export function DashboardApp({ initialMode = "free" }: DashboardAppProps) {
     const loadPenalty = Math.round(selectedWorkout.intensity / 12);
     return Math.min(96, 72 + habitBoost - loadPenalty);
   }, [completedHabits, selectedWorkout.intensity]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadAccount() {
+      const { data, error } = await insforge.auth.getCurrentUser();
+
+      if (error || !data.user) {
+        router.replace("/login");
+        return;
+      }
+
+      await ensurePulsoFitAccount(data.user);
+
+      const { data: profile } = await insforge.database
+        .from("profiles")
+        .select("plan")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+      if (!mounted) {
+        return;
+      }
+
+      setUserEmail(data.user.email);
+      setMode(profile?.plan === "pro" ? "pro" : "free");
+      setIsLoadingAccount(false);
+    }
+
+    loadAccount().catch(() => {
+      router.replace("/login");
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
+
+  async function handleSignOut() {
+    await insforge.auth.signOut();
+    router.push("/login");
+  }
+
+  if (isLoadingAccount) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-[#fbfaf6] px-5">
+        <div className="rounded-md border border-[#e6e1d8] bg-white p-6 text-center shadow-[0_24px_80px_rgba(36,31,23,0.08)]">
+          <Activity className="mx-auto text-[#178a41]" size={32} />
+          <p className="mt-4 text-sm font-semibold">Opening PulsoFit...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#fbfaf6]">
@@ -224,12 +283,13 @@ export function DashboardApp({ initialMode = "free" }: DashboardAppProps) {
               Upgrade options
             </Link>
           </div>
-          <Link
-            href="/login"
+          <button
             className="focus-ring mt-4 hidden h-10 w-full items-center justify-center rounded-md border border-[#d8d2c8] bg-white text-sm font-semibold lg:inline-flex"
+            onClick={handleSignOut}
+            type="button"
           >
             Sign out
-          </Link>
+          </button>
         </aside>
 
         <main className="p-5 sm:p-8">
@@ -245,27 +305,29 @@ export function DashboardApp({ initialMode = "free" }: DashboardAppProps) {
                 Pick the workout, check today&apos;s habits, and keep the whole
                 training flow away from the public website.
               </p>
+              <p className="mt-2 text-sm font-medium text-[#4d584f]">
+                {userEmail}
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="grid grid-cols-2 rounded-md border border-[#d8d2c8] bg-white p-1">
-                {(["free", "pro"] as const).map((item) => (
-                  <button
-                    className={`focus-ring h-9 rounded-sm px-4 text-sm font-semibold transition ${
-                      mode === item
-                        ? "bg-[#178a41] text-white"
-                        : "text-[#4d584f] hover:bg-[#f6f1ea]"
-                    }`}
-                    key={item}
-                    onClick={() => setMode(item)}
-                    type="button"
-                  >
-                    {item === "free" ? "Free" : "Pro preview"}
-                  </button>
-                ))}
-              </div>
               <span className="inline-flex h-11 items-center justify-center rounded-md border border-[#d8d2c8] bg-white px-4 text-sm font-semibold text-[#4d584f]">
                 {isFree ? "Free account" : "Pro account"}
               </span>
+              {isFree ? (
+                <Link
+                  href="/pricing"
+                  className="focus-ring inline-flex h-11 items-center justify-center rounded-md bg-[#178a41] px-4 text-sm font-semibold text-white"
+                >
+                  Upgrade
+                </Link>
+              ) : null}
+              <button
+                className="focus-ring inline-flex h-11 items-center justify-center rounded-md border border-[#d8d2c8] bg-white px-4 text-sm font-semibold lg:hidden"
+                onClick={handleSignOut}
+                type="button"
+              >
+                Sign out
+              </button>
             </div>
           </div>
 
