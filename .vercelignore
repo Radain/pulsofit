@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+.insforge
+.agent
+.agents
+.dev-server*.log
+node_modules
+.next
