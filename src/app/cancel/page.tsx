@@ -24,10 +24,10 @@ export default function CancelPage() {
               Return to pricing
             </Link>
             <Link
-              href="/dashboard"
+              href="/login"
               className="focus-ring inline-flex h-12 items-center justify-center rounded-md border border-[#d8d2c8] bg-white px-6 text-sm font-semibold"
             >
-              Preview dashboard
+              Enter free app
             </Link>
           </div>
         </section>

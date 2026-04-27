@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   Activity,
@@ -19,7 +18,6 @@ import {
   Timer,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Brand } from "./brand";
 import { plans } from "@/lib/plans";
 
 type Workout = {
@@ -142,8 +140,25 @@ function ScoreRing({ value }: { value: number }) {
   );
 }
 
-export function DashboardApp() {
-  const [mode, setMode] = useState<"free" | "pro">("free");
+type DashboardAppProps = {
+  initialMode?: "free" | "pro";
+};
+
+function AppWordmark() {
+  return (
+    <div className="inline-flex items-center gap-3 rounded-md" aria-label="PulsoFit app">
+      <span className="grid h-9 w-9 place-items-center rounded-md border border-[#dce8de] bg-white text-[#178a41] shadow-sm">
+        <Activity size={21} strokeWidth={2.2} />
+      </span>
+      <span className="text-xl font-semibold tracking-[0] text-[#101418]">
+        PulsoFit
+      </span>
+    </div>
+  );
+}
+
+export function DashboardApp({ initialMode = "free" }: DashboardAppProps) {
+  const [mode, setMode] = useState<"free" | "pro">(initialMode);
   const [selected, setSelected] = useState(1);
   const [habits, setHabits] = useState(startingHabits);
   const [started, setStarted] = useState(false);
@@ -165,16 +180,16 @@ export function DashboardApp() {
   }, [completedHabits, selectedWorkout.intensity]);
 
   return (
-    <div className="app-shell min-h-screen">
+    <div className="min-h-screen bg-[#fbfaf6]">
       <div className="grid min-h-screen lg:grid-cols-[250px_1fr_330px]">
         <aside className="border-b border-[#e6e1d8] bg-white/78 p-5 lg:border-b-0 lg:border-r">
           <div className="flex items-center justify-between lg:block">
-            <Brand />
+            <AppWordmark />
             <Link
               href="/pricing"
               className="focus-ring rounded-md bg-[#178a41] px-4 py-2 text-sm font-semibold text-white lg:hidden"
             >
-              Pro
+              Upgrade
             </Link>
           </div>
           <nav className="mt-8 hidden lg:block">
@@ -209,20 +224,26 @@ export function DashboardApp() {
               Upgrade options
             </Link>
           </div>
+          <Link
+            href="/login"
+            className="focus-ring mt-4 hidden h-10 w-full items-center justify-center rounded-md border border-[#d8d2c8] bg-white text-sm font-semibold lg:inline-flex"
+          >
+            Sign out
+          </Link>
         </aside>
 
         <main className="p-5 sm:p-8">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
             <div>
               <p className="text-sm font-semibold uppercase text-[#178a41]">
-                Overview
+                App workspace
               </p>
               <h1 className="mt-2 text-4xl font-semibold tracking-[0] text-[#101418]">
-                Your training cockpit
+                Training cockpit
               </h1>
               <p className="mt-3 max-w-2xl text-[#657168]">
-                Pick the workout, check today&apos;s habits, and adjust the
-                session around your current recovery.
+                Pick the workout, check today&apos;s habits, and keep the whole
+                training flow away from the public website.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -242,12 +263,9 @@ export function DashboardApp() {
                   </button>
                 ))}
               </div>
-              <Link
-                href="/"
-                className="focus-ring inline-flex h-11 items-center justify-center rounded-md border border-[#d8d2c8] bg-white px-4 text-sm font-semibold"
-              >
-                Back home
-              </Link>
+              <span className="inline-flex h-11 items-center justify-center rounded-md border border-[#d8d2c8] bg-white px-4 text-sm font-semibold text-[#4d584f]">
+                {isFree ? "Free account" : "Pro account"}
+              </span>
             </div>
           </div>
 
@@ -481,19 +499,22 @@ export function DashboardApp() {
             <div>
               <p className="text-xl font-semibold">{selectedWorkout.name}</p>
               <p className="mt-1 text-sm text-[#657168]">
-                {selectedWorkout.duration} · {selectedWorkout.focus}
+                {selectedWorkout.duration} - {selectedWorkout.focus}
               </p>
             </div>
             <Timer size={21} className="text-[#178a41]" />
           </div>
-          <Image
-            src="/upper-body-focus.png"
-            alt="Upper body muscle focus illustration"
-            width={520}
-            height={320}
-            className="mt-6 h-56 w-full rounded-md border border-[#eee8df] object-cover"
-            priority
-          />
+          <div className="mt-6 h-56 rounded-md border border-[#eee8df] bg-[#f2f7f0] p-4">
+            <div className="grid h-full place-items-center rounded-sm border border-[#d9e7da] bg-white/72">
+              <div className="text-center">
+                <Dumbbell className="mx-auto text-[#178a41]" size={36} />
+                <p className="mt-3 text-sm font-semibold">Upper body focus</p>
+                <p className="mt-1 text-xs text-[#657168]">
+                  Strength pattern and push volume
+                </p>
+              </div>
+            </div>
+          </div>
           <div className="mt-6 rounded-md border border-[#e6e1d8] bg-[#fbfaf6] p-4">
             <p className="text-sm font-semibold">Workout Notes</p>
             <p className="mt-2 text-sm leading-6 text-[#657168]">
@@ -510,7 +531,7 @@ export function DashboardApp() {
                 <div>
                   <p className="text-sm font-semibold">{exercise.name}</p>
                   <p className="text-xs text-[#657168]">
-                    {exercise.sets} · RPE {exercise.rpe}
+                    {exercise.sets} - RPE {exercise.rpe}
                   </p>
                 </div>
                 <ArrowRight size={15} className="text-[#9aa39b]" />

@@ -13,14 +13,14 @@ export default function SuccessPage() {
             Welcome to PulsoFit Pro
           </h1>
           <p className="mt-4 text-[#657168]">
-            Your subscription checkout completed. The MVP dashboard is ready to
-            explore while account access is added in a future version.
+            Your subscription checkout completed. Enter the isolated app
+            workspace to continue with PulsoFit Pro.
           </p>
           <Link
-            href="/dashboard"
+            href="/app?plan=pro"
             className="focus-ring mt-8 inline-flex h-12 items-center justify-center rounded-md bg-[#178a41] px-6 text-sm font-semibold text-white"
           >
-            Open dashboard
+            Open app
           </Link>
         </section>
       </main>

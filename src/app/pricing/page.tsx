@@ -129,7 +129,7 @@ export default async function PricingPage({
               ))}
             </div>
             <Link
-              href="/dashboard"
+              href="/login"
               className="focus-ring mt-8 inline-flex h-12 w-full items-center justify-center rounded-md border border-[#d8d2c8] bg-white text-sm font-semibold"
             >
               Start free

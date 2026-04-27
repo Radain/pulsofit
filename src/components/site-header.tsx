@@ -3,8 +3,8 @@ import { Brand } from "./brand";
 
 const nav = [
   { href: "/#product", label: "Product" },
-  { href: "/dashboard", label: "Dashboard" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/login", label: "Login" },
 ];
 
 export function SiteHeader() {
@@ -24,10 +24,10 @@ export function SiteHeader() {
           ))}
         </nav>
         <Link
-          href="/pricing"
+          href="/login"
           className="focus-ring inline-flex h-11 items-center justify-center rounded-md bg-[#178a41] px-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(23,138,65,0.22)] transition hover:bg-[#0f6f32]"
         >
-          Subscribe
+          Open app
         </Link>
       </div>
     </header>

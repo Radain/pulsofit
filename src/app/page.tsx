@@ -9,7 +9,6 @@ import {
   HeartPulse,
   TrendingUp,
 } from "lucide-react";
-import { CheckoutForm } from "@/components/checkout-form";
 import { LegalFooter } from "@/components/legal-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -157,10 +156,10 @@ function DashboardPreview() {
                 ),
               )}
               <Link
-                href="/dashboard"
+                href="/login"
                 className="focus-ring mt-3 inline-flex h-10 items-center justify-center rounded-md bg-[#178a41] px-4 text-xs font-semibold text-white"
               >
-                Open Dashboard
+                Open App
               </Link>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -249,7 +248,7 @@ function DashboardPreview() {
           <div className="rounded-md border border-[#e6e1d8] p-4">
             <p className="text-xs font-semibold">Recovery Score</p>
             <p className="mt-3 text-4xl font-semibold">82</p>
-            <p className="text-sm text-[#657168]">Good. You&apos;re ready to perform.</p>
+            <p className="text-sm text-[#657168]">Good. You are ready to perform.</p>
           </div>
         </aside>
       </div>
@@ -275,12 +274,17 @@ export default function Home() {
               focused fitness cockpit.
             </p>
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-              <CheckoutForm />
               <Link
-                href="/dashboard"
+                href="/login"
+                className="focus-ring inline-flex h-14 items-center justify-center rounded-md bg-[#178a41] px-8 text-base font-semibold text-white shadow-[0_14px_34px_rgba(23,138,65,0.24)] transition hover:bg-[#0f6f32]"
+              >
+                Start free
+              </Link>
+              <Link
+                href="/pricing"
                 className="focus-ring inline-flex h-14 items-center justify-center rounded-md border border-[#d8d2c8] bg-white px-8 text-base font-semibold text-[#101418] transition hover:border-[#178a41]"
               >
-                View Dashboard
+                View pricing
               </Link>
             </div>
             <p className="mt-7 text-xl font-semibold text-[#101418]">
